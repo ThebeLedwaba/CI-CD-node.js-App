@@ -2,61 +2,70 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm' # Cache dependencies
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci # Faster than npm install
+        run: npm ci
+
+      - name: Run Security Audit
+        run: npm audit --audit-level moderate
 
       - name: Run Linter
         run: npm run lint
 
-      - name: Run Tests
+      - name: Run Tests with Coverage
         run: npm test
         env:
           NODE_ENV: test
+          
+      - name: Build Verification
+        run: npm run build --if-present
 
-      - name: Validate Secrets
+      - name: Test Docker Build
         run: |
-          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
-            echo "Error: RENDER_DEPLOY_HOOK secret is not set"
-            exit 1
-          fi
+          docker build -t ci-cd-app .
+          docker run --rm -d -p 3000:3000 --name test-app ci-cd-app
+          sleep 10
+          curl -f http://localhost:3000/ || exit 1
+          docker stop test-app
 
       - name: Deploy to Render
-        if: github.event_name == 'push' # Only deploy on push, not PR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
 
-      - name: Notify Slack on Success
-        if: success()
+      - name: Deployment Success Notification
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           channel-id: 'deployments'
-          text: '✅ Deployment to Render successful for ${{ github.repository }}'
+          text: 'Deployment successful: ${{ github.repository }}@${{ github.sha }}'
 
-      - name: Notify Slack on Failure
-        if: failure()
+      - name: Deployment Failure Notification
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v1.24.0
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           channel-id: 'deployments'
-          text: '❌ Deployment to Render failed for ${{ github.repository }}'
+          text: 'Deployment failed: ${{ github.repository }} - ${{ github.event.commits[0].message }}'
