@@ -1,6 +1,5 @@
 CI/CD Node.js Application - DevOps Pipeline Implementation
-https://github.com/ThebeLedwaba/ci-cd-node-app/actions/workflows/deploy.yml/badge.svg
-https://img.shields.io/badge/Node.js-v20-green
+
 
 A production-ready Node.js application demonstrating enterprise-level CI/CD practices using GitHub Actions, automated testing, and cloud deployment strategies.
 
