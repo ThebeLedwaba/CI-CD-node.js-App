@@ -56,7 +56,7 @@ jobs:
 
       - name: Deployment Success Notification
         if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           channel-id: 'deployments'
@@ -64,7 +64,7 @@ jobs:
 
       - name: Deployment Failure Notification
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           channel-id: 'deployments'
