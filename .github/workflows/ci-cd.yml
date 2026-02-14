@@ -56,16 +56,20 @@ jobs:
 
       - name: Deployment Success Notification
         if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          channel-id: 'deployments'
-          text: 'Deployment successful: ${{ github.repository }}@${{ github.sha }}'
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "deployments"
+            text: "Deployment successful: ${{ github.repository }}@${{ github.sha }}"
 
       - name: Deployment Failure Notification
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          channel-id: 'deployments'
-          text: 'Deployment failed: ${{ github.repository }} - ${{ github.event.commits[0].message }}'
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: "deployments"
+            text: "Deployment failed: ${{ github.repository }} - ${{ github.event.commits[0].message }}"
