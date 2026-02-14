@@ -1,5 +1,5 @@
-const request = require('supertest');
-const app = require('../app');
+import request from 'supertest';
+import app from '../src/app.js';
 
 describe('CI/CD App Endpoints', () => {
   test('GET / should return success message', async () => {
